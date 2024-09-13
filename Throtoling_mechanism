@@ -1,0 +1,24 @@
+'''
+Throtoling mechanism to avoid API bans or delay because of the too many requests
+'''
+
+import time
+import requests
+from tenacity import retry, wait_exponential, stop_after_attempt
+
+@retry(wait=wait_exponential(multiplier=1, min=1, max=60), stop=stop_after_attempt(5))
+def make_api_call():
+    response = requests.get("https://api.example.com/data")
+
+    if response.status_code == 429:  # Too many requests
+        raise Exception("Rate limit hit")
+    elif response.status_code != 200:
+        response.raise_for_status()
+
+    return response.json()
+
+# Call the API
+try:
+    data = make_api_call()
+except Exception as e:
+    print(f"API call failed: {e}")
